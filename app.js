@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const cors = require('cors')
+const cors = require('cors');
+var crypto = require('crypto');
 var bodyParser = require("body-parser");
 
 const app = express();
@@ -30,8 +31,9 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a moch of a real
 app.options('*', cors());
 // app.post('/api/login', cors(), verifyLogin, (req, res) => {
 app.post('/api/login', cors(), verifyLogin, (req, res) => {
-	// Mock user - usually uname and pword comes here and you authenticate and get user
-	if (req.body.password === 'bgesaw' && req.body.user === 'jay') {
+	// password is a hash of low security pword b... no suffix
+	var hpw = crypto.createHash('md5').update(req.body.password).digest('hex');
+	if (hpw === 'e65c660c316b26d375c8878c7ac9c5d5' && req.body.user === 'jay') {
 		res.json({
 			message: "approved"
 		});
