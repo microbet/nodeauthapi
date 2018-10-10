@@ -52,6 +52,21 @@ app.post('/api/imagesearch', cors(), (req, res, next) => {  // attempt to list f
 });
 
 app.options('*', cors());
+app.post('/api/imgswap', cors(), (req, res) => {
+	// should have req.body.selected and req.body.displaced to switch
+	var imgFolder = "../solarreact/public/img";
+	var sel = imgFolder + '/' + req.body.selected;
+	var dis = imgFolder + '/' + req.body.displaced;
+	var tmp = imgFolder + '/' + 'temp.' + req.body.selected;
+	fs.renameSync(sel, tmp);  // I'm not sure this is 100% synchronous
+	fs.renameSync(dis, sel); 
+	fs.renameSync(tmp, dis);
+	res.json({
+		message: sel + " switch with " + dis
+	});
+});
+
+app.options('*', cors());
 app.post('/api/login', cors(), verifyLogin, (req, res) => {
 	// password is a hash of low security pword b... no suffix
 	var hpw = crypto.createHash('md5').update(req.body.password).digest('hex');
