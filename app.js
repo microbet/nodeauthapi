@@ -29,7 +29,7 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a moch of a real
 });
 
 app.options('*', cors());
-// app.post('/api/login', cors(), verifyLogin, (req, res) => {
+// app.post('/api/login', cors(), verifyLogin, (req, res) => { // what
 app.post('/api/login', cors(), verifyLogin, (req, res) => {
 	// password is a hash of low security pword b... no suffix
 	var hpw = crypto.createHash('md5').update(req.body.password).digest('hex');
