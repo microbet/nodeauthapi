@@ -28,10 +28,10 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a moch of a real
 		}
 	});
 });
-// working on thi
+
 app.options('*', cors());
 app.post('/api/imagesearch', cors(), (req, res, next) => {  // attempt to list files in image directory
-	var imgFolder = "./img";
+	var imgFolder = "../solarreact/public/img";
 //	var filelist = '';
 	var filelist = [];
 	fs.readdir(imgFolder, (err, files) => {
@@ -52,7 +52,6 @@ app.post('/api/imagesearch', cors(), (req, res, next) => {  // attempt to list f
 });
 
 app.options('*', cors());
-// app.post('/api/login', cors(), verifyLogin, (req, res) => { // what
 app.post('/api/login', cors(), verifyLogin, (req, res) => {
 	// password is a hash of low security pword b... no suffix
 	var hpw = crypto.createHash('md5').update(req.body.password).digest('hex');
@@ -75,7 +74,7 @@ app.post('/api/login', cors(), verifyLogin, (req, res) => {
 // FORMAT OF TOKEN
 // Authorization: Bearer <access_token>
 
-// Verify token
+// Verify token    - not sure if using token is necessary
 function verifyToken(req, res, next) {
 	// Get auth header value
 	const bearerHeader = req.headers['authorization'];
