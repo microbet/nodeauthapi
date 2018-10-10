@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 var crypto = require('crypto');
 var bodyParser = require("body-parser");
+const fs = require('fs');
 
 const app = express();
 app.use(bodyParser.json());
@@ -23,6 +24,28 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a moch of a real
 			res.json({
 				message: 'Post created...',
 				authData
+			});j
+		}
+	});
+});
+// working on thi
+app.options('*', cors());
+app.post('/api/imagesearch', cors(), (req, res, next) => {  // attempt to list files in image directory
+	var imgFolder = "./img";
+//	var filelist = '';
+	var filelist = [];
+	fs.readdir(imgFolder, (err, files) => {
+		if (err) {
+			next(err); // pass errors to express
+		} else {
+			files.forEach(file => {
+				if (file) {
+	//				filelist += file;
+					filelist.push(file);
+				}
+			});
+			res.json({
+				filelist
 			});
 		}
 	});
