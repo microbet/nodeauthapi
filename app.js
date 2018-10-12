@@ -1,13 +1,12 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-// const multer = require('multer');
+const multer = require('multer');
 var crypto = require('crypto');
 var bodyParser = require("body-parser");
 const fs = require('fs');
 
 const app = express();
-// var imgFolder = "../solarreact/public/img";
 app.use(bodyParser.json());
 
 app.get('/api', (req, res) => {
@@ -30,26 +29,21 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a moch of a real
 		}
 	});
 });
-/*
-var multerConf = {
-	storage : multer.diskStorage({
-		destination : function(req, file, next) {
-			next(null, '../solarreact/public/img');
-		},
-		filename: function(req, file, next) {
-			console.log(file);
-		}
-	}),
-};
-app.use(multer({ dest: '../solarreact/public/img/' }).single('photo'));
-*/
 
+var storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, '../solarreact/public/img')
+	},
+	filename: function (req, file, cb) {
+		cb(null, '2.jpg')
+	}
+});
+var upload = multer({ 
+	storage: storage
+});
 app.options('*', cors());
-//app.use(cors());
-app.post('/api/imgupload', cors(), (req, res, next) => { // upload pic to image directory
-//	console.log(req.body);
-
-//	var imgFolder = "../solarreact/public/img";  // this should probably be in a config or something
+app.use(cors());
+app.post('/api/imgupload', upload.single('image'), function(req, res, next) { // upload pic to image directory
 	res.send('this is post route upload');
 });
 	
@@ -57,7 +51,6 @@ app.post('/api/imgupload', cors(), (req, res, next) => { // upload pic to image 
 app.options('*', cors());
 app.post('/api/imagesearch', cors(), (req, res, next) => {  // list files in image directory
 	var imgFolder = "../solarreact/public/img";
-//	var filelist = '';
 	var filelist = [];
 	fs.readdir(imgFolder, (err, files) => {
 		if (err) {
