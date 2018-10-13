@@ -79,8 +79,13 @@ app.post('/api/imgswap', cors(), (req, res) => {
 	fs.renameSync(sel, tmp);  // I'm not sure this is 100% synchronous
 	fs.renameSync(dis, sel); 
 	fs.renameSync(tmp, dis);
+	// also need to overwrite ImageData.json with jsondata
+	fs.writeFile('../solarreact/src/ImageData.json', JSON.stringify(req.body.jsondata), (err) => {
+		if (err) throw err;
+		console.log('the file has been written');
+	});
 	res.json({
-		message: sel + " switch with " + dis
+		message: sel + " switch with " + dis + req.body.jsondata
 	});
 });
 
@@ -95,6 +100,7 @@ app.post('/api/login', cors(), verifyLogin, (req, res) => {
 	} else {
 		res.json({
 			message: "not approved"
+
 		});
 	}
 //	jwt.sign({user: user}, 'secretkey', { expiresIn: '30s' }, (err, token) => { // look at jwt docs I think
