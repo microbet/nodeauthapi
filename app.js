@@ -5,9 +5,9 @@ const multer = require('multer');
 var crypto = require('crypto');
 var bodyParser = require("body-parser");
 const fs = require('fs');
-
 const app = express();
 app.use(bodyParser.json());
+app.use(cors());
 
 app.get('/api', (req, res) => {
 	res.json({
@@ -17,7 +17,7 @@ app.get('/api', (req, res) => {
 
 app.listen(5000, () => console.log('Server started on port 5000'));
 
-app.post('/api/posts', verifyToken, (req, res) => {  // this is a moch of a real post that might be created by user or db
+app.post('/api/posts', verifyToken, (req, res) => {  // this is a mock of a real post that might be created by user or db
 	jwt.verify(req.token, 'secretkey', (err, authData) => { // verifying manually, but token should be saved in user's local storage
 		if(err) {
 			res.sendStatus(403);
@@ -30,25 +30,57 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a moch of a real
 	});
 });
 
+/*****
+ * ImageData is a file on the file system which contains data about
+ * the images, identifying which are grouped together from projects
+ * the main picture is the parent and the rest are children.
+ * Naming of the images is crucial.  And a caption is included.
+ */
+
+function writeImageData(jsondata) {
+	fs.writeFile('../solarreact/src/ImageData.json', JSON.stringify(jsondata), (err) => {
+		if (err) throw err;
+		console.log('the file has been written');
+	});
+}
+
+
+/*****
+ * route for uploading an image.  This must move the image to the right
+ * directory, name it properly, and append info to the ImageData file
+ */
+
+// this filename has to come after searching ImageData and knowing picCategory 
+// to decide the filename
 var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		cb(null, '../solarreact/public/img')
 	},
 	filename: function (req, file, cb) {
-		cb(null, '2.jpg')
+		cb(null, '1_4.jpg')
 	}
 });
 var upload = multer({ 
 	storage: storage
 });
-app.options('*', cors());
-app.use(cors());
 app.post('/api/imgupload', upload.single('image'), function(req, res, next) { // upload pic to image directory
-	res.send('this is post route upload');
+	console.log(req.body.picCategory);
+//	res.send('this is post route upload');
+	fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
+		if (err) throw err;
+		imgDataArr = JSON.parse(data);
+		imgDataArr.push([5,"./img/1_4.jpg",1,"this would be the caption"]);
+		console.log(JSON.stringify(imgDataArr));
+		writeImageData(imgDataArr);
+	});
 });
 	
 
-app.options('*', cors());
+/*****
+ * imagesearch just gets the names of the image files and returns it
+ * as an array
+ */
+
 app.post('/api/imagesearch', cors(), (req, res, next) => {  // list files in image directory
 	var imgFolder = "../solarreact/public/img";
 	var filelist = [];
@@ -58,7 +90,6 @@ app.post('/api/imagesearch', cors(), (req, res, next) => {  // list files in ima
 		} else {
 			files.forEach(file => {
 				if (file) {
-	//				filelist += file;
 					filelist.push(file);
 				}
 			});
@@ -69,7 +100,12 @@ app.post('/api/imagesearch', cors(), (req, res, next) => {  // list files in ima
 	});
 });
 
-app.options('*', cors());
+
+/*****
+ * When you are editing images you can swap them by dragging and dropping
+ * and that sends you here.
+ */
+
 app.post('/api/imgswap', cors(), (req, res) => {
 	// should have req.body.selected and req.body.displaced to switch
 	var imgFolder = "../solarreact/public/img";
@@ -80,16 +116,18 @@ app.post('/api/imgswap', cors(), (req, res) => {
 	fs.renameSync(dis, sel); 
 	fs.renameSync(tmp, dis);
 	// also need to overwrite ImageData.json with jsondata
-	fs.writeFile('../solarreact/src/ImageData.json', JSON.stringify(req.body.jsondata), (err) => {
-		if (err) throw err;
-		console.log('the file has been written');
-	});
+	writeImageData(req.body.jsondata);
 	res.json({
 		message: sel + " switch with " + dis + req.body.jsondata
 	});
 });
 
-app.options('*', cors());
+
+/*****
+ * login is pretty self-explanatory - for development I haven't started using
+ * tokens yet.  What I think I need is commented out.
+ */
+
 app.post('/api/login', cors(), verifyLogin, (req, res) => {
 	// password is a hash of low security pword b... no suffix
 	var hpw = crypto.createHash('md5').update(req.body.password).digest('hex');
@@ -115,24 +153,14 @@ app.post('/api/login', cors(), verifyLogin, (req, res) => {
 
 // Verify token    - not sure if using token is necessary
 function verifyToken(req, res, next) {
-	// Get auth header value
-	const bearerHeader = req.headers['authorization'];
-	// Check if bearer is undefined
-	if(typeof bearerHeader !== 'undefined') {
-		// Split at the space
-		const bearer = bearerHeader.split(' ');
-		// Get token from array
-		const bearerToken = bearer[1];
-		// Set the token
-		req.token = bearerToken;
-		// Next middleware
-		next();
+	const bearerHeader = req.headers['authorization']; // Get auth header value
+	if(typeof bearerHeader !== 'undefined') { // Check if bearer is undefined
+		const bearer = bearerHeader.split(' '); // Split at the space
+		const bearerToken = bearer[1]; // Get token from array
+		req.token = bearerToken; // Set the token
+		next(); // Next middleware
 	} else {
-		// forbidden
-		res.sendStatus(403);
-	//	res.json({    // could have done this for a custom message
-	//		message: 'Forbidden'
-	//	});
+		res.sendStatus(403); // forbidden
 	}
 }
 
@@ -146,6 +174,3 @@ function verifyLogin(req, res, next) {
 	req.verified = true;
 	next();
 }
-
-
-
