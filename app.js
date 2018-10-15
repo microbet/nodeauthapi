@@ -52,12 +52,17 @@ function writeImageData(jsondata) {
 
 // this filename has to come after searching ImageData and knowing picCategory 
 // to decide the filename
+
+// I think I need to not use multer here. and write my own middleware https://expressjs.com/en/guide/using-middleware.html
+// or I just have to handle the upload inside the function in the argument list of the post function.
+// to do that I'll have to find where the image goes - temp location and name?
 var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		cb(null, '../solarreact/public/img')
 	},
 	filename: function (req, file, cb) {
-		cb(null, '1_4.jpg')
+		const filename = '1_4.jpg';
+		cb(null, filename)
 	}
 });
 var upload = multer({ 
