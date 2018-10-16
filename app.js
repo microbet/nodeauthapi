@@ -37,12 +37,6 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a mock of a real
  * Naming of the images is crucial.  And a caption is included.
  */
 
-function writeImageData(jsondata) {
-	fs.writeFile('../solarreact/src/ImageData.json', JSON.stringify(jsondata), (err) => {
-		if (err) throw err;
-		console.log('the file has been written');
-	});
-}
 
 
 /*****
@@ -66,7 +60,7 @@ var storage = multer.diskStorage({
 			if (err) throw err;
 			imgDataArr = JSON.parse(data);
 			const filename = imgDataArr[imgDataArr.length-1][2].toString() + '_' + imgDataArr[imgDataArr.length-1][0].toString() + '.jpg';
-			imgDataArr.push([imgDataArr.length, "./img/" + filename, imgDataArr[imgDataArr.length-1][2], "this would be the caption here"]);
+			imgDataArr.push([imgDataArr.length+1, "./img/" + filename, imgDataArr[imgDataArr.length-1][2], "this would be the caption here"]);
 			console.log(JSON.stringify(imgDataArr));
 			writeImageData(imgDataArr);
 			cb(null, filename);
