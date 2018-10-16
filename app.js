@@ -61,23 +61,27 @@ var storage = multer.diskStorage({
 		cb(null, '../solarreact/public/img')
 	},
 	filename: function (req, file, cb) {
-		const filename = '1_4.jpg';
-		cb(null, filename)
+	//	cb(null, filename = () => {
+		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
+			if (err) throw err;
+			imgDataArr = JSON.parse(data);
+			const filename = imgDataArr[imgDataArr.length-1][2].toString() + '_' + imgDataArr[imgDataArr.length-1][0].toString() + '.jpg';
+			imgDataArr.push([imgDataArr.length, "./img/" + filename, imgDataArr[imgDataArr.length-1][2], "this would be the caption here"]);
+			console.log(JSON.stringify(imgDataArr));
+			writeImageData(imgDataArr);
+			cb(null, filename);
+		});
 	}
+
 });
+
 var upload = multer({ 
 	storage: storage
 });
 app.post('/api/imgupload', upload.single('image'), function(req, res, next) { // upload pic to image directory
+	console.log("do I get anywhere");
 	console.log(req.body.picCategory);
 //	res.send('this is post route upload');
-	fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
-		if (err) throw err;
-		imgDataArr = JSON.parse(data);
-		imgDataArr.push([5,"./img/1_4.jpg",1,"this would be the caption"]);
-		console.log(JSON.stringify(imgDataArr));
-		writeImageData(imgDataArr);
-	});
 });
 	
 
