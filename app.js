@@ -49,13 +49,11 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a mock of a real
 
 // I think I need to not use multer here. and write my own middleware https://expressjs.com/en/guide/using-middleware.html
 // or I just have to handle the upload inside the function in the argument list of the post function.
-// to do that I'll have to find where the image goes - temp location and name?
 var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		cb(null, '../solarreact/public/img')
 	},
 	filename: function (req, file, cb) {
-	//	cb(null, filename = () => {
 		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 			if (err) throw err;
 			imgDataArr = JSON.parse(data);
@@ -123,6 +121,16 @@ app.post('/api/imgswap', cors(), (req, res) => {
 	res.json({
 		message: sel + " switch with " + dis + req.body.jsondata
 	});
+});
+
+/****
+* deletePic pretty obvious - delete pic with ID given as imgnmb and rewrite JSON file
+*/
+
+app.post('/api/deletePic', (req, res) => {
+	// let imgFolder = "../solarreact/public/img";  // why not send the whole filename?
+	console.log('image to delete = ' + req.body.imgfile.thisfile);
+	res.send('I have yet to delete' + req.body.imgfile.thisfile);
 });
 
 
