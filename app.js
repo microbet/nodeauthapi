@@ -6,6 +6,7 @@ var crypto = require('crypto');
 var bodyParser = require("body-parser");
 const fs = require('fs');
 const app = express();
+const PDFDocument = require('pdfkit');
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -185,3 +186,33 @@ function verifyLogin(req, res, next) {
 	req.verified = true;
 	next();
 }
+
+app.post('/api/pdfgen', (req, res) => {
+	// let imgFolder = "../solarreact/public/img";  // why not send the whole filename?
+	
+	// Create a document
+	let doc = new PDFDocument;
+	
+	// pipe its output to a file
+	let writeStream = fs.createWriteStream('output.pdf');
+	doc.pipe(writeStream);
+	
+	// Embed a font, set the font size, and render some text
+//	doc.font('fonts/PalentinoBold.ttf')
+	doc.fontSize(25);
+	doc.text('Some text with an embedded font!', 100, 100);
+		
+	// Draw a triangle
+	doc.save()
+		.moveTo(100, 150)
+		.lineTo(100, 250)
+		.lineTo(200, 250)
+		.fill('#FF3300');
+	
+	
+	
+	// Finalize the pdf file
+	doc.end();
+	console.log('node knows something about a pdf');
+	res.send('node told react it knows something about a pdf');
+});
