@@ -9,6 +9,8 @@ const app = express();
 const PDFDocument = require('pdfkit');
 app.use(bodyParser.json());
 app.use(cors());
+require('dotenv').config();
+const sizeup = require("sizeup-api")({ key:process.env.SIZEUP_KEY });
 
 app.get('/api', (req, res) => {
 	res.json({
@@ -204,6 +206,22 @@ function verifyLogin(req, res, next) {
 }
 
 app.post('/api/pdfgen', (req, res) => {
+	Promise.all([
+		sizeup.data.getIndustryBySeokey("coffee-shops"),
+		sizeup.data.getPlaceBySeokey("california/alameda/oakland-city"),
+	]).then(([industry, place]) => {
+		console.log('do i get here');
+		Promise.all([
+			/*** Get citywide data ***/
+			sizeup.data.getRevenuePerCapita({geographicLocationId: place[0].City.Id, industryId: industry[0].Id}),
+			/*** Get countywide data ***/
+			sizeup.data.getRevenuePerCapita({geographicLocationId: place[0].County.Id, industry: industry[0].Id}),
+		]).then(([city_data, county_data]) => {
+			console.log(util.format(
+				"Revenue per capita of %s business in %s County: $%s",
+				 industry[0].Name, place[0].County.Name, county_data.Value));
+		}).catch(console.error, console.log('does this work'));
+	}).catch(console.error, console.log('how about this'));
 	// let imgFolder = "../solarreact/public/img";  // why not send the whole filename?
 	
 	// Create a document
@@ -230,5 +248,5 @@ app.post('/api/pdfgen', (req, res) => {
 	// Finalize the pdf file
 	doc.end();
 	console.log('node knows something about a pdf');
-	res.send('node told react it knows something about a pdf');
+	res.send('node told react it knows something about a pdf and sizeup key is' + process.env.SIZEUP_KEY);
 });
