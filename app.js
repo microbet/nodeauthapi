@@ -206,14 +206,34 @@ function verifyLogin(req, res, next) {
 }
 
 app.post('/api/pdfgen', (req, res) => {
+	/*
+	async function getSizeUp() {
+		try {
+			let cshops = await sizeup.data.findPlace( { term: "san fran" } ); 
+		} catch (err) {
+			console.log(err + "error up here");
+		}
+		return coffeeshops;
+	}
+	*/
+	sizeup.data.findPlace( { term: "san fran" } ).then(successCallback, failureCallback);
+
+	function successCallback(result) {
+		console.log("success: ");
+		console.log(result);
+	}
+
+	function failureCallback(error) {
+		console.log("failure: " + error);
+	}
+
+/*
 	Promise.all([
 		sizeup.data.getIndustryBySeokey("coffee-shops"),
 		sizeup.data.getPlaceBySeokey("california/alameda/oakland-city"),
 	]).then(([industry, place]) => {
 		Promise.all([
-			/*** Get citywide data ***/
 			sizeup.data.getRevenuePerCapita({geographicLocationId: place[0].City.Id, industryId: industry[0].Id}),
-			/*** Get countywide data ***/
 			sizeup.data.getRevenuePerCapita({geographicLocationId: place[0].County.Id, industry: industry[0].Id}),
 		]).then(([city_data, county_data]) => {
 			console.log(util.format(
@@ -247,5 +267,6 @@ app.post('/api/pdfgen', (req, res) => {
 	// Finalize the pdf file
 	doc.end();
 	console.log('node knows something about a pdf');
+*/
 	res.send('node told react it knows something about a pdf and sizeup key is' + process.env.SIZEUP_KEY);
 });
