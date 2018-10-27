@@ -216,10 +216,60 @@ app.post('/api/pdfgen', (req, res) => {
 		return coffeeshops;
 	}
 	*/
-	sizeup.data.findPlace( { term: "san fran" } ).then(successCallback, failureCallback);
+	
+	// hard coding some data I might get from a request
+	const state = "TX";  // not sure if this will be abbreviation or not
+	const county = "";
+	const city = "Austin";
+	const industry = "burger-restaurants";
+	// KPI
+	const revenuePerCapita = "10000";  // this will need geographicLocationId and industryId and getRevenuePerCapita function
+	const place = city + ', ' + state;
+//	const geoLocId = 3051; is SF I think, 2044 is "california/alameda/oakland-city"
+// 8589 I think is pharmacy and 8548 coffee shop - didn't double check, 8524 burger-restaurants
+//	sizeup.data.findPlace( { term: place } ).then(successCallback, failureCallback);
 
+	// try to enumerate industries
+//	sizeup.data.getIndustry( { id: 8524 } ).then(successCallback, failureCallback);
+	
+	// get the industryId from the industry name
+//	sizeup.data.getIndustryBySeokey( industry ).then(successCallback, failureCallback);
+	
+	// get the geographicLocationId from ? seems like only seokey, not simply city and county
+//	sizeup.data.getPlaceBySeokey( "california/alameda/oakland-city" ).then(successCallback, failureCallback);  // this one doesn't seem to be working
+//	sizeup.data.getPlaceBySeokey( "san-francisco-city" ).then(successCallback, failureCallback);  // this one doesn't seem to be working
+// is getPlaceBySeokey a real function, if not is there a get Id from city or city-state function? is seokey unique
+
+
+	// get data from geographicLocationId
+//	sizeup.data.getPlace( { id: geographicLocationId } ). then(successCallback, failureCallback);
+
+	// given geographicLocationId and industryId get revenue per capita  - getting a lot of null for this
+//	sizeup.data.getRevenuePerCapita( { geographicLocationId: 2044, industryId: 8589 } ).then(successCallback, failureCallback);
+	
+	// try it with average revenue  (ok I got it for 104971 and 8524, austin tx and 
+//	sizeup.data.getAverageRevenue( { geographicLocationId: 104971, industryId: 8524 } ).then(successCallback, failureCallback);
+// ok, so try to return the average revenue given "austin" and "tx" and "burger-restaurants"
+
+	// findPlace returns an object and I need result[0].City.Id
+	// getIndustryBySeokey returns and object and I need result[0].Id
+
+
+	Promise.all([
+		sizeup.data.findPlace( { term: place } ),
+		sizeup.data.getIndustryBySeokey( industry )
+	]).then(([place, industry]) => {
+			successCallback(place[0].City.Id);
+			successCallback(industry[0].Id);
+	}).catch(console.error);
+	
+	// gonna have to wrap up here for now.  the above is going to be needed a lot and should be inside a function.  the 
+	// getaveragerevenue should have it's own promise/callback/async-await or whatever and call that function
+	
+	
 	function successCallback(result) {
 		console.log("success: ");
+	//	console.log(result[0]);  // this will not always be what I want, I probably have to return it and do something else
 		console.log(result);
 	}
 
@@ -227,6 +277,7 @@ app.post('/api/pdfgen', (req, res) => {
 		console.log("failure: " + error);
 	}
 
+	
 /*
 	Promise.all([
 		sizeup.data.getIndustryBySeokey("coffee-shops"),
