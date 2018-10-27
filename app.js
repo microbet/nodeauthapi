@@ -210,7 +210,6 @@ app.post('/api/pdfgen', (req, res) => {
 		sizeup.data.getIndustryBySeokey("coffee-shops"),
 		sizeup.data.getPlaceBySeokey("california/alameda/oakland-city"),
 	]).then(([industry, place]) => {
-		console.log('do i get here');
 		Promise.all([
 			/*** Get citywide data ***/
 			sizeup.data.getRevenuePerCapita({geographicLocationId: place[0].City.Id, industryId: industry[0].Id}),
