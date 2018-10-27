@@ -130,6 +130,22 @@ app.post('/api/imgswap', cors(), (req, res) => {
 
 app.post('/api/deletePic', (req, res) => {
 	// let imgFolder = "../solarreact/public/img";  // why not send the whole filename?
+		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
+			let imgDataArr = JSON.parse(data);
+	console.log(imgDataArr);
+				  console.log(req.body.imgfile.thisfile);
+							 var newImgDataArr = [];
+				  imgDataArr.forEach(function(element) {
+							 if (element[1] !== './img/' + req.body.imgfile.thisfile) {
+										newImgDataArr.push(element);
+							 }
+							 // I need to rename everything after whatever was found
+				  });
+							 console.log(newImgDataArr);
+
+		//	writeImageData(imgDataArr);
+
+		});
 	console.log('image to delete = ' + req.body.imgfile.thisfile);
 	res.send('I have yet to delete' + req.body.imgfile.thisfile);
 });
