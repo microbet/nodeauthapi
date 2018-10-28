@@ -206,16 +206,6 @@ function verifyLogin(req, res, next) {
 }
 
 app.post('/api/pdfgen', (req, res) => {
-	/*
-	async function getSizeUp() {
-		try {
-			let cshops = await sizeup.data.findPlace( { term: "san fran" } ); 
-		} catch (err) {
-			console.log(err + "error up here");
-		}
-		return coffeeshops;
-	}
-	*/
 	
 	// hard coding some data I might get from a request
 	const state = "TX";  // not sure if this will be abbreviation or not
@@ -228,49 +218,22 @@ app.post('/api/pdfgen', (req, res) => {
 //	const geoLocId = 3051; is SF I think, 2044 is "california/alameda/oakland-city"
 // 8589 I think is pharmacy and 8548 coffee shop - didn't double check, 8524 burger-restaurants
 //	sizeup.data.findPlace( { term: place } ).then(successCallback, failureCallback);
-
-	// try to enumerate industries
 //	sizeup.data.getIndustry( { id: 8524 } ).then(successCallback, failureCallback);
-	
-	// get the industryId from the industry name
-//	sizeup.data.getIndustryBySeokey( industry ).then(successCallback, failureCallback);
-	
-	// get the geographicLocationId from ? seems like only seokey, not simply city and county
-//	sizeup.data.getPlaceBySeokey( "california/alameda/oakland-city" ).then(successCallback, failureCallback);  // this one doesn't seem to be working
-//	sizeup.data.getPlaceBySeokey( "san-francisco-city" ).then(successCallback, failureCallback);  // this one doesn't seem to be working
-// is getPlaceBySeokey a real function, if not is there a get Id from city or city-state function? is seokey unique
-
-
-	// get data from geographicLocationId
 //	sizeup.data.getPlace( { id: geographicLocationId } ). then(successCallback, failureCallback);
-
 	// given geographicLocationId and industryId get revenue per capita  - getting a lot of null for this
 //	sizeup.data.getRevenuePerCapita( { geographicLocationId: 2044, industryId: 8589 } ).then(successCallback, failureCallback);
-	
 	// try it with average revenue  (ok I got it for 104971 and 8524, austin tx and 
-//	sizeup.data.getAverageRevenue( { geographicLocationId: 104971, industryId: 8524 } ).then(successCallback, failureCallback);
-// ok, so try to return the average revenue given "austin" and "tx" and "burger-restaurants"
-
 	// findPlace returns an object and I need result[0].City.Id
 	// getIndustryBySeokey returns and object and I need result[0].Id
+	// sizeup.data.findPlace( { term: place } ).then(successCallback(place[0].City.Id), failureCallback);
 
-/*  I'm just preserving this because it basically works
-	Promise.all([
-		sizeup.data.findPlace( { term: place } ),
-		sizeup.data.getIndustryBySeokey( industry )
-	]).then(([place, industry]) => {
-			successCallback(place[0].City.Id);
-			successCallback(industry[0].Id);
-	}).catch(console.error);
-	
-	// gonna have to wrap up here for now.  the above is going to be needed a lot and should be inside a function.  the 
-	// getaveragerevenue should have it's own promise/callback/async-await or whatever and call that function
-
-	function successCallback(result) {
-		console.log("success: ");
-		console.log(result);
-	}
-*/
+	/*****
+	 * ok, this is supposedly callback hell, but it 
+	 * doesn't have to be with some helpful comments.
+	 * The first part here gets the geographicLocationId
+	 * and the industryId that we're going to need
+	 * for just about everything else
+	 */
 
 	Promise.all([
 		sizeup.data.findPlace( { term: place } ),
@@ -278,11 +241,22 @@ app.post('/api/pdfgen', (req, res) => {
 	]).then(([place, industry]) => {
 			successCallback(place[0].City.Id);
 			successCallback(industry[0].Id);
-	}).catch(console.error);
-	
-	// gonna have to wrap up here for now.  the above is going to be needed a lot and should be inside a function.  the 
-	// getaveragerevenue should have it's own promise/callback/async-await or whatever and call that function
+			let geoId = place[0].City.Id;
+			let indId = industry[0].Id;
 
+		/*****
+		 * and now in this area we will do most of the work
+		 */
+
+		// find the average revenue
+		sizeup.data.getAverageRevenue( { geographicLocationId: geoId, industryId: indId} ).then((avgRevenue) => {
+			successCallback(avgRevenue.Value);
+		}).catch(console.error);
+
+	//  there's just one little catch
+	}).catch(console.error);
+	//  pun intended
+	
 	function successCallback(result) {
 		console.log("success: ");
 		console.log(result);
@@ -290,24 +264,8 @@ app.post('/api/pdfgen', (req, res) => {
 	function failureCallback(error) {
 		console.log("failure: " + error);
 	}
-
 	
-/*
-	Promise.all([
-		sizeup.data.getIndustryBySeokey("coffee-shops"),
-		sizeup.data.getPlaceBySeokey("california/alameda/oakland-city"),
-	]).then(([industry, place]) => {
-		Promise.all([
-			sizeup.data.getRevenuePerCapita({geographicLocationId: place[0].City.Id, industryId: industry[0].Id}),
-			sizeup.data.getRevenuePerCapita({geographicLocationId: place[0].County.Id, industry: industry[0].Id}),
-		]).then(([city_data, county_data]) => {
-			console.log(util.format(
-				"Revenue per capita of %s business in %s County: $%s",
-				 industry[0].Name, place[0].County.Name, county_data.Value));
-		}).catch(console.error, console.log('does this work'));
-	}).catch(console.error, console.log('how about this'));
-	// let imgFolder = "../solarreact/public/img";  // why not send the whole filename?
-	
+/* pdf stuff - I will get back to this after getting some info from api
 	// Create a document
 	let doc = new PDFDocument;
 	
