@@ -254,6 +254,23 @@ app.post('/api/pdfgen', (req, res) => {
 	// findPlace returns an object and I need result[0].City.Id
 	// getIndustryBySeokey returns and object and I need result[0].Id
 
+/*  I'm just preserving this because it basically works
+	Promise.all([
+		sizeup.data.findPlace( { term: place } ),
+		sizeup.data.getIndustryBySeokey( industry )
+	]).then(([place, industry]) => {
+			successCallback(place[0].City.Id);
+			successCallback(industry[0].Id);
+	}).catch(console.error);
+	
+	// gonna have to wrap up here for now.  the above is going to be needed a lot and should be inside a function.  the 
+	// getaveragerevenue should have it's own promise/callback/async-await or whatever and call that function
+
+	function successCallback(result) {
+		console.log("success: ");
+		console.log(result);
+	}
+*/
 
 	Promise.all([
 		sizeup.data.findPlace( { term: place } ),
@@ -265,14 +282,11 @@ app.post('/api/pdfgen', (req, res) => {
 	
 	// gonna have to wrap up here for now.  the above is going to be needed a lot and should be inside a function.  the 
 	// getaveragerevenue should have it's own promise/callback/async-await or whatever and call that function
-	
-	
+
 	function successCallback(result) {
 		console.log("success: ");
-	//	console.log(result[0]);  // this will not always be what I want, I probably have to return it and do something else
 		console.log(result);
 	}
-
 	function failureCallback(error) {
 		console.log("failure: " + error);
 	}
