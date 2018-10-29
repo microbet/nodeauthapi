@@ -208,6 +208,7 @@ function verifyLogin(req, res, next) {
 app.post('/api/pdfgen', (req, res) => {
 	
 	// hard coding some data I might get from a request
+	// some of this is changes later
 	const state = "TX";  // not sure if this will be abbreviation or not
 	const county = "";
 	const city = "Austin";
@@ -215,6 +216,9 @@ app.post('/api/pdfgen', (req, res) => {
 	// KPI
 	const revenuePerCapita = "10000";  // this will need geographicLocationId and industryId and getRevenuePerCapita function
 	const place = city + ', ' + state;
+	
+
+	//below are basically for notes/reference
 //	const geoLocId = 3051; is SF I think, 2044 is "california/alameda/oakland-city"
 // 8589 I think is pharmacy and 8548 coffee shop - didn't double check, 8524 burger-restaurants
 //	sizeup.data.findPlace( { term: place } ).then(successCallback, failureCallback);
@@ -226,6 +230,27 @@ app.post('/api/pdfgen', (req, res) => {
 	// findPlace returns an object and I need result[0].City.Id
 	// getIndustryBySeokey returns and object and I need result[0].Id
 	// sizeup.data.findPlace( { term: place } ).then(successCallback(place[0].City.Id), failureCallback);
+	
+
+	/****
+	 * this function is building the pdf.  maybe it should be moved
+	 * the second parameter is for dynamically named properties of the pdfMsgObj
+	 * the function changes pdfMsgObj because objects are passed by reference
+	 * or something like that in javascript and that means I can use the parameters
+	 * kind of like global variables without using global variables.
+	 * this object will be used in the buildPdf function which creates the pdf
+	 */
+	let pdfMsgObj = {msg: 'Welcome to the PDF\n'};
+	function buildPdfMsg(addedMsg, target='') {
+		console.log("wish I were here");
+		if (target) {
+			pdfMsgObj[target] = addedMsg;
+		} else {
+			pdfMsgObj.msg = pdfMsgObj.msg.concat(addedMsg + '\n');
+		}
+		console.log(addedMsg);
+		console.log(pdfMsgObj.msg);
+	}
 
 	/*****
 	 * ok, this is supposedly callback hell, but it 
@@ -239,57 +264,114 @@ app.post('/api/pdfgen', (req, res) => {
 		sizeup.data.findPlace( { term: place } ),
 		sizeup.data.getIndustryBySeokey( industry )
 	]).then(([place, industry]) => {
-			successCallback(place[0].City.Id);
-			successCallback(industry[0].Id);
+			successCallback(place[0].City.Id, "City Id");
+			successCallback(place[0].Metro.Id, "Metro Id");
+			successCallback(industry[0].Id, "Industry Id");
 			let geoId = place[0].City.Id;
 			let indId = industry[0].Id;
 
 		/*****
 		 * and now in this area we will do most of the work
 		 */
+		Promise.all([							// but it must be wrapped up in a Promise ofc
+			// find the average revenue
+			sizeup.data.getAverageRevenue( { geographicLocationId: geoId, industryId: indId} ),
+			// find the total revenue
+			sizeup.data.getTotalRevenue( { geographicLocationId: geoId, industryId: indId} ),
+			// find the total employees (overcommenting much?)
+			sizeup.data.getTotalEmployees( { geographicLocationId: geoId, industryId: indId} ),
+			industry,
+			place
+		]).then(([avgRevenue, 
+						totalRevenue,
+						totalEmployees,
+						industry,
+						place]) => {
+				successCallback(avgRevenue.Value, "Average Revenue");
+				successCallback(totalRevenue.Value, "Total Revenue");
+				successCallback(totalEmployees.Value, "Total Employees");
+				// note: below 2nd param is dynamically named as a property of the pdfMsgObj			
+				buildPdfMsg(industry[0].Name + " in " + place[0].DisplayName, 'industryAndLocation');
+							console.log(place);
+		}).then(buildPdf).catch(console.error); // ok, 2 catches (in cback hell time goes backwards) 
 
+	//  there's just one little catch (see previous comment, I mean following comment)
+	}).catch(console.error);
+	//  pun intended
+	
+	function successCallback(result, msg="success") {
+		console.log(msg + ": ");
+		console.log(result);
+		buildPdfMsg(msg + ': ' + result);
+	}
+	function failureCallback(error) {
+		console.log("failure: " + error);
+	}
+
+//	function buildPdf() {
+//		console.log('this worked');
+//	}
+	
+// pdf stuff - I will get back to this after getting some info from api
+	// color notes
+	// light blue = #0ea1ff
+	// dark blue = #125a88
+	function buildPdf() {
+		// Create a document
+		let doc = new PDFDocument;
+		
+		// pipe its output to a file
+		let writeStream = fs.createWriteStream('output.pdf');
+		doc.pipe(writeStream);
+		
+		//	doc.font('fonts/PalentinoBold.ttf')
+
+		// Draw a rectangle - this will be szu-industry-and-locationXsSm-container
+		doc.save()
+			.moveTo(30, 30)
+			.lineTo(600, 30)
+			.lineTo(600, 90)
+			.lineTo(30, 90)
+			.fill('#0ea1ff');
+
+		// Embed a font, set the font size, and render some text
+		doc.fontSize(25);
+		doc.fillColor('white');
+		doc.text(pdfMsgObj.industryAndLocation, 60, 35);
+	//	doc.fontSize(25);
+	//	doc.fillColor('white');
+	//	doc.text(pdfMsgObj.msg, 60, 35);
+		
+		// Draw a triangle
+		doc.save()
+			.moveTo(500, 150)
+			.lineTo(500, 250)
+			.lineTo(600, 250)
+			.fill('#0ea1ff');
+	
+		// Finalize the pdf file
+		doc.end();
+	}
+	console.log('node knows something about a pdf');
+	res.send('node told react it knows something about a pdf and sizeup key is' + process.env.SIZEUP_KEY);
+});
+	/*
 		// find the average revenue
 		sizeup.data.getAverageRevenue( { geographicLocationId: geoId, industryId: indId} ).then((avgRevenue) => {
-			successCallback(avgRevenue.Value);
+			successCallback(avgRevenue.Value, "Average Revenue");
+		}).catch(console.error);
+
+		// find the total revenue
+		sizeup.data.getTotalRevenue( { geographicLocationId: geoId, industryId: indId} ).then((totalRevenue) => {
+			successCallback(totalRevenue.Value, "Total Revenue");
+		}).catch(console.error);
+
+		// find the total employees 
+		sizeup.data.getTotalEmployees( { geographicLocationId: geoId, industryId: indId} ).then((totalEmployees) => {
+			successCallback(totalEmployees.Value, "Total Employees");
 		}).catch(console.error);
 
 	//  there's just one little catch
 	}).catch(console.error);
 	//  pun intended
-	
-	function successCallback(result) {
-		console.log("success: ");
-		console.log(result);
-	}
-	function failureCallback(error) {
-		console.log("failure: " + error);
-	}
-	
-/* pdf stuff - I will get back to this after getting some info from api
-	// Create a document
-	let doc = new PDFDocument;
-	
-	// pipe its output to a file
-	let writeStream = fs.createWriteStream('output.pdf');
-	doc.pipe(writeStream);
-	
-	// Embed a font, set the font size, and render some text
-//	doc.font('fonts/PalentinoBold.ttf')
-	doc.fontSize(25);
-	doc.text('Some text with an embedded font!', 100, 100);
-		
-	// Draw a triangle
-	doc.save()
-		.moveTo(100, 150)
-		.lineTo(100, 250)
-		.lineTo(200, 250)
-		.fill('#FF3300');
-	
-	
-	
-	// Finalize the pdf file
-	doc.end();
-	console.log('node knows something about a pdf');
 */
-	res.send('node told react it knows something about a pdf and sizeup key is' + process.env.SIZEUP_KEY);
-});
