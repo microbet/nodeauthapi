@@ -12,6 +12,7 @@ app.use(bodyParser.json());
 app.use(cors());
 require('dotenv').config();
 const sizeup = require("sizeup-api")({ key:process.env.SIZEUP_KEY });
+const request = require('request');
 
 app.get('/api', (req, res) => {
 	res.json({
@@ -345,6 +346,22 @@ app.post('/api/pdfgen', (req, res) => {
 	function failureCallback(error) {
 		console.log("failure: " + error);
 	}
+		/*  the pic needs to be downloaded first and the pdf
+		 *  built in a callback
+		 */
+	/*
+		var download = function(uri, filename, callback){
+			request.head(uri, function(err, res, body){
+				console.log('content-type:', res.headers['content-type']);
+				console.log('content-length:', res.headers['content-length']);
+				request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+			});
+		};
+
+		download(url, 'google.png', function(){
+  			console.log('done');
+		});
+		*/
 
 	/****
 	 * note: If more than one pdf style is necessary it would not be hard
@@ -412,7 +429,8 @@ app.post('/api/pdfgen', (req, res) => {
 			.fillColor(colors.greydark)
 				.text(" miles from the current city");
 		doc.moveDown();
-		doc.image('img/staticmap.png', 25, doc.y, { width: 562 } );
+		doc.image('google.png', 25, doc.y, { width: 562 } );
+		
 	// I'm going to have to pipe this image in, which probably means putting this whole 
 		// function in a promise.all
 		// doc.image('https://maps.googleapis.com/maps/api/staticmap?center=Brooklyn+Bridge,New+York,NY&zoom=13&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:S%7C40.702147,-74.015794&markers=color:green%7Clabel:G%7C40.711614,-74.012318&markers=color:red%7Clabel:C%7C40.718217,-73.998284&key=AIzaSyBYmAqm62QJXA2XRi1KkKVtWa6-BVTZ7WE');
@@ -481,6 +499,78 @@ app.post('/api/pdfgen', (req, res) => {
 		// for the moment just going to try a second pdf
 		// 
 	//	https.request({ url: "https://maps.googleapis.com/maps/api/staticmap?center=Brooklyn+Bridge,New+York,NY&zoom=13&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:S%7C40.702147,-74.015794&markers=color:green%7Clabel:G%7C40.711614,-74.012318&markers=color:red%7Clabel:C%7C40.718217,-73.998284&key=AIzaSyBYmAqm62QJXA2XRi1KkKVtWa6-BVTZ7WE", encoding: null }, ( error, response, body) => {
+		let url = "https://maps.googleapis.com/maps/api/staticmap?center=Brooklyn+Bridge,New+York,NY&zoom=13&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:S%7C40.702147,-74.015794&markers=color:green%7Clabel:G%7C40.711614,-74.012318&markers=color:red%7Clabel:C%7C40.718217,-73.998284&key=AIzaSyBYmAqm62QJXA2XRi1KkKVtWa6-BVTZ7WE";
+//		const options = {
+//			hostname: 'maps.googleapis.com',
+//			port: 443,
+//			path: '/maps/api/staticmap',
+			// ?center=Brooklyn+Bridge,New+York,NY&zoom=13&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:S%7C40.702147,-74.015794&markers=color:green%7Clabel:G%7C40.711614,-74.012318&markers=color:red%7Clabel:C%7C40.718217,-73.998284&key=AIzaSyBYmAqm62QJXA2XRi1KkKVtWa6-BVTZ7WE',
+//			method: 'GET',
+		//	encoding: null,
+//		};
+
+//		https.request( options, (error, response, body) => {
+//		let url = "pk-khabar.com/wp-content/uploads/2018/09/picture-of-frogs-6.jpg";
+//		let url = "https://vignette.wikia.nocookie.net/fantendo/images/6/6e/Small-mario.png";
+	//	let url = "https://www.google.com";
+		console.log(url);
+		/*
+		const req = https.request(   url, (response) => {
+			console.log("request made");
+			console.log(response.statusCode);
+		//	if (!error && response.statusCode === 200) {
+			if (response.statusCode === 200) {
+				console.log("was not an error");
+				let pdf = new PDFDocument;
+				pdf.pipe(fs.createWriteStream('out.pdf'));
+				let img = new Buffer(body, 'base64');
+				pdf.image(img, 10, 10)
+				pdf.end()
+			}
+	//		else { console.log("my error: ", error); }
+		});
+		req.end();
+		const req = https.request( url, (res) => {
+		//	res.setEncoding('binary');
+			console.log(res.headers);
+			let buffer;
+			res.setEncoding('base64');
+	//		let base64Image = new Buffer();
+			res.on('data', function(chunk) {
+				buffer += chunk;
+			});
+			res.on('end', function () {
+				let decodedImage = new Buffer(buffer, 'base64');
+				let pdf = new PDFDocument;
+				console.log("here");
+				pdf.pipe(fs.createWriteStream('out.pdf'));
+				console.log("here2");
+				pdf.image(decodedImage, 10, 10);
+				console.log("here32");
+				pdf.end();
+			});
+		});
+		req.end();
+		const req = https.request( url, (res) => {
+			res.setEncoding('binary');
+			let imagecontents;
+			res.on('data', function(chunk) {
+				imagecontents += chunk;
+			});
+			res.on('end', function () {
+
+				let buffer = new Buffer(imagecontents.split(',')[1], 'base64');
+				pdf = new PDFDocument;
+				pdf.image(buffer, 10, 10);
+				pdf.end();
+			});
+		});
+		req.end();
+		*/
+	}
+});
+
+		/*
 		let pdf = new PDFDocument;
 		let writeSecondStream = fs.createWriteStream('out.pdf');
 		pdf.pipe(writeSecondStream);
@@ -502,6 +592,7 @@ app.post('/api/pdfgen', (req, res) => {
 		pdf.end();
 	}
 });
+*/
 	
 	// hard coding some data I might get from a request
 	// some of this is changes later
