@@ -12,6 +12,13 @@ app.use(bodyParser.json());
 app.use(cors());
 require('dotenv').config();
 
+function writeImageData(jsondata) {
+	fs.writeFile('../solarreact/src/ImageData.json', JSON.stringify(jsondata), (err) => {
+		if (err) throw err;
+		console.log('the file has been written');
+	});
+}
+
 app.get('/api', (req, res) => {
 	res.json({
 		message: 'Welcome to the API'
@@ -131,25 +138,30 @@ app.post('/api/imgswap', cors(), (req, res) => {
 */
 
 app.post('/api/deletePic', (req, res) => {
-	// let imgFolder = "../solarreact/public/img";  // why not send the whole filename?
-		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
-			let imgDataArr = JSON.parse(data);
-	console.log(imgDataArr);
-				  console.log(req.body.imgfile.thisfile);
-							 var newImgDataArr = [];
-				  imgDataArr.forEach(function(element) {
-							 if (element[1] !== './img/' + req.body.imgfile.thisfile) {
-										newImgDataArr.push(element);
-							 }
-							 // I need to rename everything after whatever was found
-				  });
-							 console.log(newImgDataArr);
-
-		//	writeImageData(imgDataArr);
-
+	let imgFolder = "../solarreact/public/img/";  // why not send the whole filename?
+	fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
+		let imgDataArr = JSON.parse(data);
+		console.log(imgDataArr);
+		console.log(req.body.imgfile.thisfile);
+		var newImgDataArr = [];
+		imgDataArr.forEach(function(element) {
+			if (element[1] !== './img/' + req.body.imgfile.thisfile) {
+				newImgDataArr.push(element);
+			}
+			// I need to rename everything after whatever was found
 		});
-	console.log('image to delete = ' + req.body.imgfile.thisfile);
+		console.log(newImgDataArr);
+		writeImageData(newImgDataArr);
+	});
+	console.log('image to delete = ' + req.body.imgfile.thisfile)
 	res.send('I have yet to delete' + req.body.imgfile.thisfile);
+	fs.unlink(imgFolder + req.body.imgfile.thisfile, (err) => {
+		if (err) {
+			console.log("error deleting ", imgFolder + req.body.imgfile.thisfile, " :", err);
+		} else {
+			console.log(imgFolder + req.body.imgfile.thisfile, " was deleted");
+		}
+	});
 });
 
 
