@@ -133,6 +133,23 @@ app.post('/api/imgswap', cors(), (req, res) => {
 	});
 });
 
+/***
+* edit the caption
+*/
+
+app.post('/api/editCaption', (req, res) => {
+	fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
+		let imgDataArr = JSON.parse(data);
+		console.log(imgDataArr);
+		console.log("change caption of " + req.body.imgfile + " to " + req.body.newCaption);
+		let index = req.body.imgfile - 1;
+		imgDataArr[index][3] = req.body.newCaption;
+		writeImageData(imgDataArr);
+		console.log(imgDataArr);
+	});
+});
+
+
 /****
 * deletePic pretty obvious - delete pic with ID given as imgnmb and rewrite JSON file
 */
