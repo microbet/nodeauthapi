@@ -142,7 +142,7 @@ app.post('/api/editCaption', (req, res) => {
 		let imgDataArr = JSON.parse(data);
 		console.log(imgDataArr);
 		console.log("change caption of " + req.body.imgfile + " to " + req.body.newCaption);
-		let index = req.body.imgfile - 1;
+		let index = req.body.imgfile;
 		imgDataArr[index][3] = req.body.newCaption;
 		writeImageData(imgDataArr);
 		console.log(imgDataArr);
@@ -156,20 +156,12 @@ app.post('/api/editCaption', (req, res) => {
 
 app.post('/api/deletePic', (req, res) => {
 	let imgFolder = "../solarreact/public/img/";  // why not send the whole filename?
-	fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
-		let imgDataArr = JSON.parse(data);
-		console.log(imgDataArr);
-		console.log(req.body.imgfile.thisfile);
-		var newImgDataArr = [];
-		imgDataArr.forEach(function(element) {
-			if (element[1] !== './img/' + req.body.imgfile.thisfile) {
-				newImgDataArr.push(element);
-			}
-			// I need to rename everything after whatever was found
-		});
-		console.log(newImgDataArr);
-		writeImageData(newImgDataArr);
-	});
+	let prefix = '';
+	let prefixArr = [];
+	let fileNameArr = [];
+	let childNum  = 0;
+	console.log(req.body.jsondata);
+	writeImageData(req.body.jsondata);
 	console.log('image to delete = ' + req.body.imgfile.thisfile)
 	res.send('I have yet to delete' + req.body.imgfile.thisfile);
 	fs.unlink(imgFolder + req.body.imgfile.thisfile, (err) => {
@@ -179,8 +171,32 @@ app.post('/api/deletePic', (req, res) => {
 			console.log(imgFolder + req.body.imgfile.thisfile, " was deleted");
 		}
 	});
+	if (req.body.imgfile.thisfile !== '1.jpg') {
+		fileNameArr = req.body.imgfile.thisfile.split('.');
+		prefixArr = fileNameArr[1].split('_');
+		childNum = prefexArr[1];
+	} else {
+		childNum = 0;
+	}
+	fs.readdir(imgFolder, (err, files) => {
+		if (err) {
+			next(err); // pass errors to express
+		} else {
+			let i = 0;
+			files.forEach(file => {
+				if (file !== '1.jpg' && i > childNum) {
+					if (file == '1_1.jpg') {
+						let sel = imgFolder + '/' + file;
+						let dis = imgFolder + '/1_' + i + '.jpg';
+						fs.renameSync(sel, dis);
+					}
+				}
+				i++;
+			});
+		}
+	});
 });
-
+	
 
 /*****
  * login is pretty self-explanatory - for development I haven't started using
