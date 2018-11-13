@@ -164,32 +164,58 @@ app.post('/api/deletePic', (req, res) => {
 	writeImageData(req.body.jsondata);
 	console.log('image to delete = ' + req.body.imgfile.thisfile)
 	res.send('I have yet to delete' + req.body.imgfile.thisfile);
-	fs.unlink(imgFolder + req.body.imgfile.thisfile, (err) => {
+	fs.unlink(imgFolder + req.body.imgfile.thisfile, (err) => {  // this is asynchronous
 		if (err) {
 			console.log("error deleting ", imgFolder + req.body.imgfile.thisfile, " :", err);
 		} else {
 			console.log(imgFolder + req.body.imgfile.thisfile, " was deleted");
 		}
-	});
+	});  
+	console.log("thisfile");
+	console.log(req.body.imgfile.thisfile);
 	if (req.body.imgfile.thisfile !== '1.jpg') {
 		fileNameArr = req.body.imgfile.thisfile.split('.');
-		prefixArr = fileNameArr[1].split('_');
-		childNum = prefexArr[1];
+		console.log("filenamearr");
+		console.log(fileNameArr);
+		prefixArr = fileNameArr[0].split('_');
+		console.log("prefixarr");
+		console.log(prefixArr);
+		console.log("prefixarr1");
+		console.log(prefixArr[1]);
+		childNum = prefixArr[1];
+		console.log("back here with childnum");
+		console.log(childNum);
 	} else {
+		console.log("i'm here with childnum");
 		childNum = 0;
 	}
 	fs.readdir(imgFolder, (err, files) => {
 		if (err) {
 			next(err); // pass errors to express
 		} else {
+			console.log("files");
+			console.log(files);
 			let i = 0;
 			files.forEach(file => {
-				if (file !== '1.jpg' && i > childNum) {
+				console.log("file");
+				console.log(file);
+				console.log("childNum");
+				console.log(childNum);
+				if (file !== '1.jpg' && i >= childNum) {
+					console.log("I made it in line 205 and i is");
+					console.log(i);
+					let sel = imgFolder + '/' + file;
+					let dis = '';
 					if (file == '1_1.jpg') {
-						let sel = imgFolder + '/' + file;
-						let dis = imgFolder + '/1_' + i + '.jpg';
-						fs.renameSync(sel, dis);
+						dis = imgFolder + '/1.jpg';
+					} else {
+						dis = imgFolder + '/1_' + i + '.jpg';
 					}
+					console.log("sel");
+					console.log(sel);
+					console.log("dis");
+					console.log(dis);
+					fs.renameSync(sel, dis);
 				}
 				i++;
 			});
