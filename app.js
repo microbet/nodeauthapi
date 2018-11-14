@@ -67,8 +67,13 @@ var storage = multer.diskStorage({
 		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 			if (err) throw err;
 			imgDataArr = JSON.parse(data);
-			const filename = imgDataArr[imgDataArr.length-1][2].toString() + '_' + imgDataArr[imgDataArr.length-1][0].toString() + '.jpg';
-			imgDataArr.push([imgDataArr.length+1, "./img/" + filename, imgDataArr[imgDataArr.length-1][2], "this would be the caption here"]);
+		//	const filename = imgDataArr[imgDataArr.length-1][2].toString() + '_' + imgDataArr[imgDataArr.length-1][0].toString() + '.jpg';
+			const filename = imgDataArr[0] ? 
+								imgDataArr[0][0].toString() + '_' + imgDataArr[imgDataArr.length-1][0].toString() + '.jpg'
+							 :
+								'1.jpg';
+			const parentId = imgDataArr[0] ? imgDataArr[0][0] : 0;
+			imgDataArr.push([imgDataArr.length+1, "./img/" + filename, parentId, "this would be the caption here"]);
 			console.log(JSON.stringify(imgDataArr));
 			writeImageData(imgDataArr);
 			cb(null, filename);
