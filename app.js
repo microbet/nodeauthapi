@@ -181,62 +181,66 @@ app.post('/api/editCaption', (req, res) => {
 * deletePic pretty obvious - delete pic with ID given as imgnmb and rewrite JSON file
 */
 
+function getFilename(path) {
+	let slashArr = path.split('/');
+	let slashArrLen = slashArr.length;
+	return slashArr[slashArrLen - 1];
+}
+
+function isParent(fileName) {
+	if (fileName.includes('_')) { return false; }
+	else { return true; }
+}
+
+function getChildNum(fileName) {
+	let regex = /.*([0-9]*)_([0-9]*).*/g
+	let matches = regex.exec(file);
+	return matches[1];	
+}
+
+function getFamNum(fileName) {
+	let regex = /.*([0-9]*).*\.[a-zA-Z]{3,4}/g
+	let matches = regex.exec(file);
+	return matches[1];
+}
+
 app.post('/api/deletePic', (req, res) => {
 	let imgFolder = "../solarreact/public/img/";  // why not send the whole filename?
-	let prefix = '';
-	let prefixArr = [];
-	let fileNameArr = [];
-	let childNum  = 0;
-	console.log(req.body.jsondata);
+	let fileName = getFilename(req.body.imgSrc);
+	let childNum;
 	writeImageData(req.body.jsondata);
-	console.log('image to delete = ' + req.body.imgfile.thisfile)
-	res.send('I have yet to delete' + req.body.imgfile.thisfile);
-	fs.unlink(imgFolder + req.body.imgfile.thisfile, (err) => {  // this is asynchronous
+	res.send('I am here to delete' + req.body.imgSrc);
+	fs.unlink(imgFolder + fileName, (err) => {  // this is asynchronous
 		if (err) {
-			console.log("error deleting ", imgFolder + req.body.imgfile.thisfile, " :", err);
+			console.log("error deleting ", imgFolder + fileName, " :", err);
 		} else {
-			console.log(imgFolder + req.body.imgfile.thisfile, " was deleted");
+			console.log(imgFolder + fileName, " was deleted");
 		}
 	});  
-	console.log("thisfile");
-	console.log(req.body.imgfile.thisfile);
-	if (req.body.imgfile.thisfile !== '1.jpg') {
-		fileNameArr = req.body.imgfile.thisfile.split('.');
-		console.log("filenamearr");
-		console.log(fileNameArr);
-		prefixArr = fileNameArr[0].split('_');
-		console.log("prefixarr");
-		console.log(prefixArr);
-		console.log("prefixarr1");
-		console.log(prefixArr[1]);
-		childNum = prefixArr[1];
-		console.log("back here with childnum");
-		console.log(childNum);
+	if (!isParent(fileName)) {
+		childNum = getChildNum(fileName);
 	} else {
-		console.log("i'm here with childnum");
 		childNum = 0;
 	}
+	let famNum = getFamNum(fileName);
+	let thisFamNum;
+	let thisChildNum;
+	let newChildNum;
 	fs.readdir(imgFolder, (err, files) => {
 		if (err) {
 			next(err); // pass errors to express
 		} else {
-			console.log("files");
-			console.log(files);
-			let i = 0;
 			files.forEach(file => {
-				console.log("file");
-				console.log(file);
-				console.log("childNum");
-				console.log(childNum);
-				if (file !== '1.jpg' && i >= childNum) {
-					console.log("I made it in line 205 and i is");
-					console.log(i);
+				thisFamNum = getFamNum(file);
+				thisChildNum = getChildNum(file);
+				newChildNum = thisChildNum - 1;
+				if (!isParent(file) && thisFamNum === famNum) {
 					let sel = imgFolder + '/' + file;
 					let dis = '';
-					if (file == '1_1.jpg') {
-						dis = imgFolder + '/1.jpg';
+					if (thisChildNum === '1') {
+						dis = imgFolder + '/' + famNum + '.jpg';
 					} else {
-						dis = imgFolder + '/1_' + i + '.jpg';
+						dis = imgFolder + '/' + famNum + '_' + newChildNum + '.jpg';
 					}
 					console.log("sel");
 					console.log(sel);
@@ -244,7 +248,6 @@ app.post('/api/deletePic', (req, res) => {
 					console.log(dis);
 					fs.renameSync(sel, dis);
 				}
-				i++;
 			});
 		}
 	});
