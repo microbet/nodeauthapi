@@ -60,6 +60,21 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a mock of a real
 // I think I need to not use multer here. and write my own middleware https://expressjs.com/en/guide/using-middleware.html
 // or I just have to handle the upload inside the function in the argument list of the post function.
 // this may have to check the file size
+function getFamilyFromJson(imgDataArr, Id) {
+	let famArr, end;
+	let start = -1;
+	for (let i=0; i<imgDataArr.length; i++) {
+		if (imgDataArr[i][0] === Id || imgDataArr[i][2] === Id) {
+			famArr.push(imgDataArr[i]);
+			if (start === -1) {
+				start = i;
+			}
+			end = i;
+		}
+	}
+	return (famArr, start, end);
+}
+				
 var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		cb(null, '../solarreact/public/img')
@@ -68,14 +83,21 @@ var storage = multer.diskStorage({
 		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 			if (err) throw err;
 			imgDataArr = JSON.parse(data);
-			const filename = imgDataArr[0] ? 
-								imgDataArr[0][0].toString() + '_' + imgDataArr[imgDataArr.length-1][0].toString() + '.jpg'
+			const famPackArr = getFamilyFromJson(imgDataArr, req.body.familyId);
+			const famArr = famPackArr[0];
+			const start = famPackArr[1];
+			const end = famPackArr[2];
+			const filename = famArr[0] ? 
+								famArr[0][0].toString() + '_' + famArr[imgDataArr.length-1][0].toString() + '.jpg'
 							 :
-								'1.jpg';
+								req.body.familyId + '.jpg';
 			var allowedMimes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif']; 
-			if (allowedMimes.includes(file.mimetype) && file.size < (1024*1024)) {
-				const parentId = imgDataArr[0] ? imgDataArr[0][0] : 0;
-				imgDataArr.push([imgDataArr.length+1, "./img/" + filename, parentId, "this would be the caption here"]);
+			if (allowedMimes.includes(file.mimetype) && file.size < (5000000)) {
+				const parentId = famArr[0] ? famArr[0][0] : 0;
+				famArr.push([famArr.length+1, "./img/" + filename, parentId, "this would be the caption here"]);
+				const beforeArr = imgDataArr.slice(0, start);
+				const endArr = imgDataArr.slice(end+1);
+				imgDataArr = beforeArr.concat(famArr, endArr);
 				console.log(JSON.stringify(imgDataArr));
 				writeImageData(imgDataArr);
 			}
@@ -87,7 +109,7 @@ var storage = multer.diskStorage({
 
 var limits = {
 	files: 1,
-	fileSize: 1024 * 1024, // 1MB max for now anyway
+	fileSize: 5000000, // 1MB max for now anyway
 };
 
 var fileFilter = function(req, file, cb) {
@@ -168,9 +190,9 @@ app.post('/api/editCaption', (req, res) => {
 	fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 		let imgDataArr = JSON.parse(data);
 		console.log(imgDataArr);
-		console.log("change caption of " + req.body.imgfile + " to " + req.body.newCaption);
-		let index = req.body.imgfile;
-		imgDataArr[index][3] = req.body.newCaption;
+		console.log("change caption of " + req.body.imgSrc + " to " + req.body.newCaption);
+		let index = req.body.imgSrc;
+		imgDataArr[index-1][3] = req.body.newCaption;
 		writeImageData(imgDataArr);
 		console.log(imgDataArr);
 	});
@@ -193,14 +215,14 @@ function isParent(fileName) {
 }
 
 function getChildNum(fileName) {
-	let regex = /.*([0-9]*)_([0-9]*).*/g
-	let matches = regex.exec(file);
-	return matches[1];	
+	let regex = /.?([0-9]*)_([0-9]*).*/g
+	let matches = regex.exec(fileName);
+	return matches[2];	
 }
 
 function getFamNum(fileName) {
-	let regex = /.*([0-9]*).*\.[a-zA-Z]{3,4}/g
-	let matches = regex.exec(file);
+	let regex = /.?([0-9]*)[_]{0,1}.?\.[a-zA-Z]{3,4}/g
+	let matches = regex.exec(fileName);
 	return matches[1];
 }
 
