@@ -60,19 +60,24 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a mock of a real
 // I think I need to not use multer here. and write my own middleware https://expressjs.com/en/guide/using-middleware.html
 // or I just have to handle the upload inside the function in the argument list of the post function.
 // this may have to check the file size
+
 function getFamilyFromJson(imgDataArr, Id) {
-	let famArr, end;
-	let start = -1;
+	let famArr = [];
+	let start = 0;
+	let end = 0;
+	let started = false;
 	for (let i=0; i<imgDataArr.length; i++) {
-		if (imgDataArr[i][0] === Id || imgDataArr[i][2] === Id) {
-			famArr.push(imgDataArr[i]);
-			if (start === -1) {
+		end = i;
+		if (imgDataArr[i].family === Id) {
+			famArr.push(imgDataArr[i])
+			if (start === 0) { 
 				start = i;
+				started = true;
 			}
-			end = i;
+		} else if (started) {
+			return (famArr, start, end);
 		}
 	}
-	return [famArr, start, end];
 }
 				
 var storage = multer.diskStorage({
@@ -83,15 +88,15 @@ var storage = multer.diskStorage({
 		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 			if (err) throw err;
 			imgDataArr = JSON.parse(data);
+			console.log("reqb = ", req.body);
+			console.log("file = ", file);
+			console.log("ida = ", imgDataArr);
+			console.log("rbf = ", req.body.familyId);
 			const [famArr, start, end] = getFamilyFromJson(imgDataArr, req.body.familyId);
-	//		const famArr = famPackArr[0];
-	//		const start = famPackArr[1];
-	//		const end = famPackArr[2];
-			const filename = getFamNum(famArr[0][1]).toString() + '_' + (end - start).toString() + '.jpg'
+			const filename = famArr[0].family.toString() + '_' + (end - start - 1).toString() + '.jpg'
 			const allowedMimes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif']; 
 			if (allowedMimes.includes(file.mimetype) && file.size < (5000000)) {
-				const parentId = req.body.familyId;
-				famArr.push([famArr.length+1, "./img/" + filename, parentId, "this would be the caption here"]);
+				famArr.push({"family":req.body.familyId,"caption":""});
 				const beforeArr = imgDataArr.slice(0, start);
 				const endArr = imgDataArr.slice(end+1);
 				imgDataArr = beforeArr.concat(famArr, endArr);
