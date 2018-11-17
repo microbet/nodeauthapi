@@ -72,7 +72,7 @@ function getFamilyFromJson(imgDataArr, Id) {
 			end = i;
 		}
 	}
-	return (famArr, start, end);
+	return [famArr, start, end];
 }
 				
 var storage = multer.diskStorage({
@@ -83,17 +83,14 @@ var storage = multer.diskStorage({
 		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 			if (err) throw err;
 			imgDataArr = JSON.parse(data);
-			const famPackArr = getFamilyFromJson(imgDataArr, req.body.familyId);
-			const famArr = famPackArr[0];
-			const start = famPackArr[1];
-			const end = famPackArr[2];
-			const filename = famArr[0] ? 
-								famArr[0][0].toString() + '_' + famArr[imgDataArr.length-1][0].toString() + '.jpg'
-							 :
-								req.body.familyId + '.jpg';
-			var allowedMimes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif']; 
+			const [famArr, start, end] = getFamilyFromJson(imgDataArr, req.body.familyId);
+	//		const famArr = famPackArr[0];
+	//		const start = famPackArr[1];
+	//		const end = famPackArr[2];
+			const filename = getFamNum(famArr[0][1]).toString() + '_' + (end - start).toString() + '.jpg'
+			const allowedMimes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif']; 
 			if (allowedMimes.includes(file.mimetype) && file.size < (5000000)) {
-				const parentId = famArr[0] ? famArr[0][0] : 0;
+				const parentId = req.body.familyId;
 				famArr.push([famArr.length+1, "./img/" + filename, parentId, "this would be the caption here"]);
 				const beforeArr = imgDataArr.slice(0, start);
 				const endArr = imgDataArr.slice(end+1);
