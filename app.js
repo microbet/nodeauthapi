@@ -66,41 +66,68 @@ function getFamilyFromJson(imgDataArr, Id) {
 	let start = 0;
 	let end = 0;
 	let started = false;
+	console.log("I am here");
+	console.log("imgDtal = ", imgDataArr.length);
+	console.log("idahere = ", imgDataArr);
+	console.log("id = ", Id);
 	for (let i=0; i<imgDataArr.length; i++) {
+		console.log("whf?");
 		end = i;
-		if (imgDataArr[i].family === Id) {
+		console.log("idafh = ", imgDataArr[i].family);
+		if (imgDataArr[i].family == Id) {  // types don't match, maybe convert?  find out which is which
+			console.log("hi");
 			famArr.push(imgDataArr[i])
-			if (start === 0) { 
+			if (start === 0 && !started) { 
 				start = i;
 				started = true;
 			}
 		} else if (started) {
-			return (famArr, start, end);
+			console.log("famarr = ", famArr);
+			return [famArr, start, end];
 		}
 	}
 }
-				
+
 var storage = multer.diskStorage({
 	destination: function (req, file, cb) {
+		console.log("when here");
 		cb(null, '../solarreact/public/img')
 	},
 	filename: function (req, file, cb) {
 		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 			if (err) throw err;
 			imgDataArr = JSON.parse(data);
+		//	let t = JSON.stringify(req);
+		//	console.log(t.slice(1,400));
+		//	console.log(req.res);
+			console.log("imgda = ", imgDataArr);
 			console.log("reqb = ", req.body);
+			console.log("reqf = ", req.familyId);
 			console.log("file = ", file);
 			console.log("ida = ", imgDataArr);
 			console.log("rbf = ", req.body.familyId);
-			const [famArr, start, end] = getFamilyFromJson(imgDataArr, req.body.familyId);
-			const filename = famArr[0].family.toString() + '_' + (end - start - 1).toString() + '.jpg'
-			const allowedMimes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif']; 
-			if (allowedMimes.includes(file.mimetype) && file.size < (5000000)) {
-				famArr.push({"family":req.body.familyId,"caption":""});
+			// deconstructing arrays not work in node?
+			// why no req.body in here
+		//	const [famArr, start, end] = getFamilyFromJson(imgDataArr, req.body.familyId);
+			const famPackArr = getFamilyFromJson(imgDataArr, req.body.familyId);
+			const famArr = famPackArr[0];
+			const start = famPackArr[1];
+			const end = famPackArr[2];
+			const filename = famArr[0].family.toString() + '_' + (end - start).toString() + '.jpg'
+			const allowedMimes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif'];
+			console.log("mimetype = ", file.mimetype);
+			console.log("file size = ", file.size);
+			if (allowedMimes.includes(file.mimetype)) { // && file.size < (5000000)) {  // why file.size undef
+				let thisChildNum = end - start;
+				let familyId = parseInt(req.body.familyId);
+				famArr.push({"family":familyId,"childNum":thisChildNum,"caption":""});
+				// then childnum was one too low
+				// then lost the first one of the end part
 				const beforeArr = imgDataArr.slice(0, start);
-				const endArr = imgDataArr.slice(end+1);
+				const endArr = imgDataArr.slice(end);
 				imgDataArr = beforeArr.concat(famArr, endArr);
 				console.log(JSON.stringify(imgDataArr));
+				console.log("here imgda = ", imgDataArr);
 				writeImageData(imgDataArr);
 			}
 			cb(null, filename);
@@ -115,6 +142,7 @@ var limits = {
 };
 
 var fileFilter = function(req, file, cb) {
+	console.log("i git ere");
 	// supported image file mimetypes
 	var allowedMimes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif']; 
 	if (allowedMimes.includes(file.mimetype)) {
@@ -133,7 +161,7 @@ var upload = multer({
 });
 app.post('/api/imgupload', upload.single('image'), function(req, res, next) { // upload pic to image directory
 	console.log("do I get anywhere");
-	console.log(req.body.picCategory);
+//	console.log(req.body.picCategory);
 //	res.send('this is post route upload');
 });
 	
