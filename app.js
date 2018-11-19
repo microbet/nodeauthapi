@@ -57,8 +57,6 @@ app.post('/api/posts', verifyToken, (req, res) => {  // this is a mock of a real
 // this filename has to come after searching ImageData and knowing picCategory 
 // to decide the filename
 
-// I think I need to not use multer here. and write my own middleware https://expressjs.com/en/guide/using-middleware.html
-// or I just have to handle the upload inside the function in the argument list of the post function.
 // this may have to check the file size
 
 function getFamilyFromJson(imgDataArr, Id) {
@@ -66,15 +64,9 @@ function getFamilyFromJson(imgDataArr, Id) {
 	let start = 0;
 	let end = 0;
 	let started = false;
-	console.log("I am here");
-	console.log("imgDtal = ", imgDataArr.length);
-	console.log("idahere = ", imgDataArr);
-	console.log("id = ", Id);
 	for (let i=0; i<imgDataArr.length; i++) {
-		console.log("whf?");
 		end = i;
-		console.log("idafh = ", imgDataArr[i].family);
-		if (imgDataArr[i].family == Id) {  // types don't match, maybe convert?  find out which is which
+		if (imgDataArr[i].family === parseInt(Id)) {  // types don't match, maybe convert?  find out which is which
 			console.log("hi");
 			famArr.push(imgDataArr[i])
 			if (start === 0 && !started) { 
@@ -85,6 +77,7 @@ function getFamilyFromJson(imgDataArr, Id) {
 			console.log("famarr = ", famArr);
 			return [famArr, start, end];
 		}
+		if (i === imgDataArr.length - 1) { return [famArr, start, end]; }
 	}
 }
 
@@ -97,18 +90,6 @@ var storage = multer.diskStorage({
 		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 			if (err) throw err;
 			imgDataArr = JSON.parse(data);
-		//	let t = JSON.stringify(req);
-		//	console.log(t.slice(1,400));
-		//	console.log(req.res);
-			console.log("imgda = ", imgDataArr);
-			console.log("reqb = ", req.body);
-			console.log("reqf = ", req.familyId);
-			console.log("file = ", file);
-			console.log("ida = ", imgDataArr);
-			console.log("rbf = ", req.body.familyId);
-			// deconstructing arrays not work in node?
-			// why no req.body in here
-		//	const [famArr, start, end] = getFamilyFromJson(imgDataArr, req.body.familyId);
 			const famPackArr = getFamilyFromJson(imgDataArr, req.body.familyId);
 			const famArr = famPackArr[0];
 			const start = famPackArr[1];
@@ -121,13 +102,10 @@ var storage = multer.diskStorage({
 				let thisChildNum = end - start;
 				let familyId = parseInt(req.body.familyId);
 				famArr.push({"family":familyId,"childNum":thisChildNum,"caption":""});
-				// then childnum was one too low
-				// then lost the first one of the end part
 				const beforeArr = imgDataArr.slice(0, start);
 				const endArr = imgDataArr.slice(end);
 				imgDataArr = beforeArr.concat(famArr, endArr);
 				console.log(JSON.stringify(imgDataArr));
-				console.log("here imgda = ", imgDataArr);
 				writeImageData(imgDataArr);
 			}
 			cb(null, filename);
@@ -160,8 +138,6 @@ var upload = multer({
 	fileFilter: fileFilter
 });
 app.post('/api/imgupload', upload.single('image'), function(req, res, next) { // upload pic to image directory
-	console.log("do I get anywhere");
-//	console.log(req.body.picCategory);
 //	res.send('this is post route upload');
 });
 	
@@ -223,17 +199,7 @@ app.post('/api/editCaption', (req, res) => {
 		console.log(imgDataArr);
 		console.log("change caption of " + req.body.imgObj + " to " + req.body.newCaption);
 		imgDataArr.forEach(function(element) {
-			console.log("ef = ", element.family);
-			let typey = typeof(element.family);
-			console.log(typey);
-			console.log("iof = ", req.body.imgObj.family);
-			console.log(typeof(req.body.imgObj.family));
-			console.log("ec = ", element.childNum);
-			console.log(typeof(element.childNum));
-			console.log("ioc = ", req.body.imgObj.childNum);
-			console.log(typeof(req.body.imgObj.childNum));
 			if (element.family === req.body.imgObj.family && element.childNum === req.body.imgObj.childNum) {
-				console.log("i made it here");
 				element.caption = req.body.newCaption;
 			}
 		});
@@ -281,12 +247,6 @@ app.post('/api/deletePic', (req, res) => {
 			console.log(imgFolder + fileName, " was deleted");
 		}
 	});  
-//	if (!isParent(fileName)) {
-//		childNum = getChildNum(fileName);
-//	} else {
-//		childNum = 0;
-//	}
-//	let famNum = getFamNum(fileName);
 	let thisFamNum;
 	let thisChildNum;
 	let newChildNum;
@@ -298,22 +258,11 @@ app.post('/api/deletePic', (req, res) => {
 			files.forEach(file => {
 				thisFamNum = getFamNum(file);
 				thisChildNum = getChildNum(file);
-				console.log("file = ", file);
 				newChildNum = thisChildNum - 1;
-				console.log("ncn = ", newChildNum);
-				console.log("rbic = ", req.body.imgObj.childNum);
-				console.log("thisfn = ", thisFamNum);
-				console.log("rbif = ", req.body.imgObj.family);
-				console.log("typeof tfn = ", typeof(thisFamNum));
-				console.log("typeof tbif = ", typeof(req.body.imgObj.family));
 				if (newChildNum>=req.body.imgObj.childNum && thisFamNum === req.body.imgObj.family) {
 					let sel = imgFolder + '/' + file;
 					let dis = '';
 					dis = imgFolder + '/' + thisFamNum.toString() + '_' + newChildNum.toString() + '.jpg';
-					console.log("sel");
-					console.log(sel);
-					console.log("dis");
-					console.log(dis);
 					fs.renameSync(sel, dis);
 				}
 			});
