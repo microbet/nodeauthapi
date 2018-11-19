@@ -217,12 +217,26 @@ app.post('/api/imgswap', cors(), (req, res) => {
 */
 
 app.post('/api/editCaption', (req, res) => {
+	console.log("what the harpo");
 	fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 		let imgDataArr = JSON.parse(data);
 		console.log(imgDataArr);
-		console.log("change caption of " + req.body.imgSrc + " to " + req.body.newCaption);
-		let index = req.body.imgSrc;
-		imgDataArr[index-1][3] = req.body.newCaption;
+		console.log("change caption of " + req.body.imgObj + " to " + req.body.newCaption);
+		imgDataArr.forEach(function(element) {
+			console.log("ef = ", element.family);
+			let typey = typeof(element.family);
+			console.log(typey);
+			console.log("iof = ", req.body.imgObj.family);
+			console.log(typeof(req.body.imgObj.family));
+			console.log("ec = ", element.childNum);
+			console.log(typeof(element.childNum));
+			console.log("ioc = ", req.body.imgObj.childNum);
+			console.log(typeof(req.body.imgObj.childNum));
+			if (element.family === req.body.imgObj.family && element.childNum === req.body.imgObj.childNum) {
+				console.log("i made it here");
+				element.caption = req.body.newCaption;
+			}
+		});
 		writeImageData(imgDataArr);
 		console.log(imgDataArr);
 	});
