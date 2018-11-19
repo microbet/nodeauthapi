@@ -233,10 +233,8 @@ app.post('/api/editCaption', (req, res) => {
 * deletePic pretty obvious - delete pic with ID given as imgnmb and rewrite JSON file
 */
 
-function getFilename(path) {
-	let slashArr = path.split('/');
-	let slashArrLen = slashArr.length;
-	return slashArr[slashArrLen - 1];
+function getFilename(imgObj) {
+	return imgObj.family + '_' + imgObj.childNum + '.jpg';
 }
 
 function isParent(fileName) {
@@ -251,17 +249,17 @@ function getChildNum(fileName) {
 }
 
 function getFamNum(fileName) {
-	let regex = /.?([0-9]*)[_]{0,1}.?\.[a-zA-Z]{3,4}/g
+	console.log("fileName = ", fileName);
+	let regex =  /([0-9]*)_[0-9]*\.[jpg|png|gif|jpeg]/gi
 	let matches = regex.exec(fileName);
-	return matches[1];
+	console.log("matches = ", matches);
+	return parseInt(matches[1]);
 }
 
 app.post('/api/deletePic', (req, res) => {
 	let imgFolder = "../solarreact/public/img/";  // why not send the whole filename?
-	let fileName = getFilename(req.body.imgSrc);
-	let childNum;
+	let fileName = getFilename(req.body.imgObj);
 	writeImageData(req.body.jsondata);
-	res.send('I am here to delete' + req.body.imgSrc);
 	fs.unlink(imgFolder + fileName, (err) => {  // this is asynchronous
 		if (err) {
 			console.log("error deleting ", imgFolder + fileName, " :", err);
@@ -269,31 +267,35 @@ app.post('/api/deletePic', (req, res) => {
 			console.log(imgFolder + fileName, " was deleted");
 		}
 	});  
-	if (!isParent(fileName)) {
-		childNum = getChildNum(fileName);
-	} else {
-		childNum = 0;
-	}
-	let famNum = getFamNum(fileName);
+//	if (!isParent(fileName)) {
+//		childNum = getChildNum(fileName);
+//	} else {
+//		childNum = 0;
+//	}
+//	let famNum = getFamNum(fileName);
 	let thisFamNum;
 	let thisChildNum;
 	let newChildNum;
-	fs.readdir(imgFolder, (err, files) => {
+	fs.readdir(imgFolder, (err, files) => {  // this could all happen before the deletion asynchronously
+	// then put inside a function which is called from inside unlink
 		if (err) {
 			next(err); // pass errors to express
 		} else {
 			files.forEach(file => {
 				thisFamNum = getFamNum(file);
 				thisChildNum = getChildNum(file);
+				console.log("file = ", file);
 				newChildNum = thisChildNum - 1;
-				if (!isParent(file) && thisFamNum === famNum) {
+				console.log("ncn = ", newChildNum);
+				console.log("rbic = ", req.body.imgObj.childNum);
+				console.log("thisfn = ", thisFamNum);
+				console.log("rbif = ", req.body.imgObj.family);
+				console.log("typeof tfn = ", typeof(thisFamNum));
+				console.log("typeof tbif = ", typeof(req.body.imgObj.family));
+				if (newChildNum>=req.body.imgObj.childNum && thisFamNum === req.body.imgObj.family) {
 					let sel = imgFolder + '/' + file;
 					let dis = '';
-					if (thisChildNum === '1') {
-						dis = imgFolder + '/' + famNum + '.jpg';
-					} else {
-						dis = imgFolder + '/' + famNum + '_' + newChildNum + '.jpg';
-					}
+					dis = imgFolder + '/' + thisFamNum.toString() + '_' + newChildNum.toString() + '.jpg';
 					console.log("sel");
 					console.log(sel);
 					console.log("dis");
