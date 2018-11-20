@@ -236,6 +236,9 @@ function getFamNum(fileName) {
 	return parseInt(matches[1]);
 }
 
+// if you've deleted the last of a family you have to redo family names
+// of all higher families
+
 app.post('/api/deletePic', (req, res) => {
 	let imgFolder = "../solarreact/public/img/";  // why not send the whole filename?
 	let fileName = getFilename(req.body.imgObj);
