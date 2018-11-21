@@ -65,7 +65,7 @@ function getFamilyFromJson(imgDataArr, Id) {
 	let end = 0;
 	let started = false;
 	for (let i=0; i<imgDataArr.length; i++) {
-		end = i;
+		end = i+1;
 		if (imgDataArr[i].family === parseInt(Id)) {  // types don't match, maybe convert?  find out which is which
 			console.log("hi");
 			famArr.push(imgDataArr[i])
@@ -90,23 +90,44 @@ var storage = multer.diskStorage({
 		fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 			if (err) throw err;
 			imgDataArr = JSON.parse(data);
+			console.log("imgDataArr = ", imgDataArr);
 			const famPackArr = getFamilyFromJson(imgDataArr, req.body.familyId);
 			const famArr = famPackArr[0];
+			console.log("famArr = ", famArr);
 			const start = famPackArr[1];
 			const end = famPackArr[2];
-			const filename = famArr[0].family.toString() + '_' + (end - start).toString() + '.jpg'
+			let filename;
+			if (!famArr[0]) {
+				filename = req.body.familyId + "_0.jpg";
+			} else {
+				filename = famArr[0].family.toString() + '_' + (end - start).toString() + '.jpg'
+			}
+			console.log("filename = ", filename);
 			const allowedMimes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif'];
 			console.log("mimetype = ", file.mimetype);
 			console.log("file size = ", file.size);
 			if (allowedMimes.includes(file.mimetype)) { // && file.size < (5000000)) {  // why file.size undef
+				console.log("end = ", end);
+				console.log("start = ", start);
 				let thisChildNum = end - start;
+				console.log("famArrletn = ", famArr.length);
+				if (famArr.length === 0) { thisChildNum = 0; let famArr = []; }
 				let familyId = parseInt(req.body.familyId);
+				console.log("familyId = ", familyId);
+				console.log("childNum = ", thisChildNum);
+				console.log("famArr = ", famArr);
 				famArr.push({"family":familyId,"childNum":thisChildNum,"caption":""});
+				console.log("famArr - ", famArr);
 				const beforeArr = imgDataArr.slice(0, start);
 				const endArr = imgDataArr.slice(end);
-				imgDataArr = beforeArr.concat(famArr, endArr);
-				console.log(JSON.stringify(imgDataArr));
-				writeImageData(imgDataArr);
+				let newImgDataArr = [];
+				if (thisChildNum === 0) {
+					newImgDataArr = imgDataArr.concat(famArr);
+				} else {
+					newImgDataArr = beforeArr.concat(famArr, endArr);
+				}
+				console.log(JSON.stringify(newImgDataArr));
+				writeImageData(newImgDataArr);
 			}
 			cb(null, filename);
 		});
