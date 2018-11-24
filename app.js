@@ -212,8 +212,12 @@ app.post('/api/imgswap', cors(), (req, res) => {
 /***
 * edit the caption
 */
-
-app.post('/api/editCaption', (req, res) => {
+app.use(function(req,res,next) {
+	res.header("Access-Control-Allow-Origin","localhost:3000");
+	res.header("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
+	next();
+});
+app.post('/api/editCaption', (req, res, next) => {
 	console.log("what the harpo");
 	fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
 		let imgDataArr = JSON.parse(data);
