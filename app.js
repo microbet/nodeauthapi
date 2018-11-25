@@ -65,8 +65,8 @@ function getFamilyFromJson(imgDataArr, Id) {
 	let end = 0;
 	let started = false;
 	for (let i=0; i<imgDataArr.length; i++) {
-		end = i+1;
-		if (imgDataArr[i].family === parseInt(Id)) {  // types don't match, maybe convert?  find out which is which
+		if (imgDataArr[i].family === parseInt(Id)) {  
+			end = i+1;
 			console.log("hi");
 			famArr.push(imgDataArr[i])
 			if (start === 0 && !started) { 
@@ -212,15 +212,20 @@ app.post('/api/imgswap', cors(), (req, res) => {
 /***
 * edit the caption
 */
+/*
 app.use(function(req,res,next) {
-	res.header("Access-Control-Allow-Origin","localhost:3000");
-	res.header("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
+	res.setHeader("Access-Control-Allow-Origin","*");
+	res.setHeader("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
+	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+	res.setHeader('Access-Control-Allow-Credentials', true);
 	next();
 });
-app.post('/api/editCaption', (req, res, next) => {
-	console.log("what the harpo");
+*/
+//app.use(cors({origin: '*'}));
+app.post('/api/editCaption', (req, res) => {
+	// console.log("what the harpo");
 	fs.readFile('../solarreact/src/ImageData.json', 'utf8', (err, data) => {
-		let imgDataArr = JSON.parse(data);
+		imgDataArr = JSON.parse(data);
 		console.log(imgDataArr);
 		console.log("change caption of " + req.body.imgObj + " to " + req.body.newCaption);
 		imgDataArr.forEach(function(element) {
@@ -296,6 +301,7 @@ app.post('/api/deletePic', (req, res) => {
 			});
 		}
 	});
+	res.json({ message: "pic deleted" });
 });
 	
 
