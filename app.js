@@ -8,6 +8,7 @@ const fs = require('fs');
 const app = express();
 const PDFDocument = require('pdfkit');
 const https = require('https');
+const sharp = require('sharp');
 app.use(bodyParser.json());
 app.use(cors());
 require('dotenv').config();
@@ -237,6 +238,37 @@ app.post('/api/editCaption', (req, res) => {
 		console.log(imgDataArr);
 	});
 });
+
+/***
+ * resize image
+ * prototype working - should keep resized image temporarily? dunno
+*/
+
+app.post('/api/imageResize', (req, res) => {
+	let imgFolder = "../solarreact/public/img/";
+	let fileName = getFilename(req.body.imgObj);
+	console.log("image new size = ", req.body.imageNewSize);
+	let dimensionArr = req.body.imageNewSize.split('x');
+	console.log("image height and width = ", dimensionArr[0], 'and', dimensionArr[1]);
+	console.log("imgObj = ", req.body.imgObj);
+	let target = imgFolder + fileName;
+	imageResizer(imgFolder, fileName, dimensionArr[0], dimensionArr[1]);
+});
+
+function imageResizer(imgFolder, fileName, height, width) {
+	let tmp = imgFolder + 'temp.' + fileName;
+	sharp.cache(false);
+	sharp(imgFolder + fileName)
+		.resize(parseInt(height), parseInt(width))
+		.toFile(tmp, function(err, info) {
+			console.log(err);
+			console.log("info = ", info);
+			console.log("imgFolder + fileName = ", imgFolder + fileName);
+			fs.unlinkSync(imgFolder + fileName);
+			fs.renameSync(tmp, imgFolder + fileName);
+		});
+};
+	
 
 
 /****
